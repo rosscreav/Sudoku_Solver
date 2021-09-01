@@ -1,56 +1,152 @@
 package main
 
 
-import "fmt"
+import (
+	"fmt"
+)
 
-var co_ord [2]int
+var row int
+var col int
+//var input_string string  = "2.6.3......1.65.7..471.8.5.5......29..8.194.6...42...1....428..6.93....5.7.....13"
+var test string = "3.65.84..52........87....31..3.1..8.9..863..5.5..9.6..13....25........74..52.63.."
 
 func main() {
-    var input = [9][9]int{
-        {3, 0, 6, 5, 0, 8, 4, 0, 0},
-        {5, 2, 0, 0, 0, 0, 0, 0, 0},
-        {0, 8, 7, 0, 0, 0, 0, 3, 1},
-        {0, 0, 3, 0, 1, 0, 0, 8, 0},
-        {9, 0, 0, 8, 6, 3, 0, 0, 5},
-        {0, 5, 0, 0, 9, 0, 6, 0, 0},
-        {1, 3, 0, 0, 0, 0, 2, 5, 0},
-        {0, 0, 0, 0, 0, 0, 0, 7, 4},
-        {0, 0, 5, 2, 0, 6, 3, 0, 0}}
-        print(input)
+    var input = string_to_array(test)
+    print(input)
 
-        if solve(input){
-        	print(input)
-        } else{
-        	fmt.Printf("This was not solved \n")
-        }
-    
+
+
+    if solve(input){
+    	//print(input)
+    	fmt.Println("Solved")
+    } else{
+    	fmt.Printf("This was not solved \n")
+    	print(input)
+    }
 }
 
 func solve(input [9][9]int) bool{
-	co_ord = [2]int{0,0}
-
+	row = 0
+	col = 0
+	var cur_row int
+	var cur_col int
+	//If there is no empty spaces return with exit code true
 	if !find_next_empty(input){
+		print(input)
 		return true
 	}
-
+	//Start checking numbers
+	for num:=1; num<10; num++{
+		fmt.Printf("Checking %d at [%d,%d]\n",num,row,col)
+		if check_location_safety(input, num){
+			//fmt.Println("safe num")
+			input[row][col] = num
+			cur_row = row
+			cur_col = col
+			print(input)
+			//Recursive check return
+			if solve(input){
+				return true
+				
+			}
+			fmt.Println("failed")
+			//If it has failed
+			input[cur_row][cur_col] = 0
+			row = cur_row
+			col = cur_col
+			print(input)
+		}
+	}
+	
+	//Backtrack or return unsolvable
 	return false
-
-	//Check for empty location
 
 }
 
 //Find next empty location
 func find_next_empty(array [9][9]int) bool {
-	for i := 0; i < 10; i++{
-		for j := 0; j < 10; j++{
+	for i := 0; i < 9; i++{
+		for j := 0; j < 9; j++{
 			if array[i][j] == 0 {
-				co_ord[0] = i
-				co_ord[1] = j 
+				row = i
+				col = j 
 				return true
 			}
 		}
 	}
 	return false
+}
+
+func check_location_safety(array [9][9]int, num int) bool{
+	return !used_in_row(array,num) && !used_in_col(array,num) && !used_in_box(array,num) 
+}
+
+func used_in_row(array [9][9]int, num int) bool{
+	for i := 0; i<9; i++{
+		if array[row][i] == num {
+			fmt.Println("row fail")
+			return true
+		}
+	}
+	return false
+}
+
+func used_in_col(array [9][9]int, num int) bool{
+	for i := 0; i<9; i++{
+		if array[i][col] == num {
+			fmt.Println("col fail")
+			return true
+
+		}
+	}
+	return false
+}
+
+func used_in_box(array [9][9]int, num int) bool{
+	var box_start_row = row - row%3
+	var box_start_col = col - col%3
+	for i := 0; i < 3; i++{
+		for j := 0; j < 3; j++{
+			if array[i+box_start_row][box_start_col+j] == num {
+				fmt.Println("box fail")
+				return true
+			}
+		}
+	}
+	return false 
+}
+
+
+func string_to_array(input string)[9][9]int{
+	if len(input) != 81{
+		panic("String wrong length")
+	}
+	var slice [][]int
+	var array [9][9]int
+	var row []int 
+	var value int
+	for _, letter := range input {
+        if letter == '.' {
+        	value = 0
+        }else{
+        	value = int(letter - '0')
+        }
+        //Add to row or reset to new row
+        if len(row) < 9{
+        	row = append(row,value)
+        }else{
+        	slice = append(slice, row)
+        	row = append([]int{},value)
+        }
+    }
+    //Add final row
+    slice = append(slice, row)
+
+    //Convert to an array
+    for i := 0; i<9; i++{
+    	copy(array[i][:],slice[i])
+	}
+    return array
 }
 
 //Prints out the array of numbers with formatting
