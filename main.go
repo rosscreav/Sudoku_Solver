@@ -1,9 +1,6 @@
 package main
 
-
-import (
-	"fmt"
-)
+import "fmt"
 
 var row int
 var col int
@@ -13,8 +10,6 @@ var test string = "3.65.84..52........87....31..3.1..8.9..863..5.5..9.6..13....2
 func main() {
     var input = string_to_array(test)
     print(input)
-
-
 
     if solve(input){
     	//print(input)
@@ -28,8 +23,7 @@ func main() {
 func solve(input [9][9]int) bool{
 	row = 0
 	col = 0
-	var cur_row int
-	var cur_col int
+	var current [2]int
 	//If there is no empty spaces return with exit code true
 	if !find_next_empty(input){
 		print(input)
@@ -41,19 +35,19 @@ func solve(input [9][9]int) bool{
 		if check_location_safety(input, num){
 			//fmt.Println("safe num")
 			input[row][col] = num
-			cur_row = row
-			cur_col = col
+			//Store the current position to avoid the recursion modifying variables
+			current[0] = row
+			current[1] = col
 			print(input)
 			//Recursive check return
 			if solve(input){
-				return true
-				
+				return true	
 			}
 			fmt.Println("failed")
 			//If it has failed
-			input[cur_row][cur_col] = 0
-			row = cur_row
-			col = cur_col
+			row = current[0]
+			col = current[1]
+			input[row][col] = 0
 			print(input)
 		}
 	}
@@ -78,42 +72,23 @@ func find_next_empty(array [9][9]int) bool {
 }
 
 func check_location_safety(array [9][9]int, num int) bool{
-	return !used_in_row(array,num) && !used_in_col(array,num) && !used_in_box(array,num) 
-}
-
-func used_in_row(array [9][9]int, num int) bool{
 	for i := 0; i<9; i++{
-		if array[row][i] == num {
+		if array[row][i] == num || array[i][col] == num{
 			fmt.Println("row fail")
-			return true
+			return false
 		}
 	}
-	return false
-}
-
-func used_in_col(array [9][9]int, num int) bool{
-	for i := 0; i<9; i++{
-		if array[i][col] == num {
-			fmt.Println("col fail")
-			return true
-
-		}
-	}
-	return false
-}
-
-func used_in_box(array [9][9]int, num int) bool{
 	var box_start_row = row - row%3
 	var box_start_col = col - col%3
 	for i := 0; i < 3; i++{
 		for j := 0; j < 3; j++{
 			if array[i+box_start_row][box_start_col+j] == num {
 				fmt.Println("box fail")
-				return true
+				return false
 			}
 		}
 	}
-	return false 
+	return true
 }
 
 
