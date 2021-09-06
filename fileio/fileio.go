@@ -1,6 +1,6 @@
 package fileio
 
-//Impotyd
+//Imports
 import (
     //Buffered reader
 	"bufio"
