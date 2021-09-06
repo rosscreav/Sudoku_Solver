@@ -1,23 +1,49 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	io "example.com/sudoku/fileio"
+	"time"
+	"os"
+)
 
 var row int
 var col int
-//var input_string string  = "2.6.3......1.65.7..471.8.5.5......29..8.194.6...42...1....428..6.93....5.7.....13"
-var test string = "3.65.84..52........87....31..3.1..8.9..863..5.5..9.6..13....25........74..52.63.."
 
 func main() {
-    var input = string_to_array(test)
-    print(input)
+	argsWithoutProg := os.Args[1:]
+	if len(argsWithoutProg) == 0{
+		argsWithoutProg = append(argsWithoutProg, "fileio/TestCases/puzzles0_kaggle")
+	}	
+	for _,filename := range argsWithoutProg{
+	    var testCases = io.Read_file(filename)
 
-    if solve(input){
-    	//print(input)
-    	fmt.Println("Solved")
-    } else{
-    	fmt.Printf("This was not solved \n")
-    	print(input)
-    }
+	    var solvedtimes []time.Duration
+	    var unsolvedtimes []time.Duration
+	    Totalstart := time.Now()
+
+	    for _,testcase := range testCases{
+	    	start := time.Now()
+	    	if solve(testcase){
+	    		solvedtimes = append(solvedtimes,time.Since(start))
+	    	} else{
+	    		unsolvedtimes = append(unsolvedtimes,time.Since(start))
+	   		}
+	    }
+	    elapsed := time.Since(Totalstart)
+	    fmt.Printf("Testing %s",filename)
+		fmt.Printf("\nTested %d cases in %s\n",len(solvedtimes),elapsed)
+	    fmt.Printf("Solved: %d\nUnsolved: %d\n",len(solvedtimes),len(unsolvedtimes))
+	    //Solved Statistics
+	    fmt.Printf("\nSolved Case statistics\n")
+	    var min,max,mean = statistics(solvedtimes)
+	    fmt.Printf("Minimum Time: %s\nMaximum Time: %s\nMean Time (μ): %s\n",min,max,mean)
+	    //Unsolved Statistics
+	    fmt.Printf("\nUnsolved Case statistics\n")
+	    min,max,mean = statistics(unsolvedtimes)
+	    fmt.Printf("Minimum Time: %s\nMaximum Time: %s\nMean Time (μ): %s\n",min,max,mean)
+	    fmt.Printf("\n")
+   	}
 }
 
 func solve(input [9][9]int) bool{
@@ -26,29 +52,27 @@ func solve(input [9][9]int) bool{
 	var current [2]int
 	//If there is no empty spaces return with exit code true
 	if !find_next_empty(input){
-		print(input)
+		//print(input)
 		return true
 	}
 	//Start checking numbers
 	for num:=1; num<10; num++{
-		fmt.Printf("Checking %d at [%d,%d]\n",num,row,col)
+		//fmt.Printf("Checking %d at [%d,%d]\n",num,row,col)
 		if check_location_safety(input, num){
 			//fmt.Println("safe num")
 			input[row][col] = num
 			//Store the current position to avoid the recursion modifying variables
 			current[0] = row
 			current[1] = col
-			print(input)
 			//Recursive check return
 			if solve(input){
 				return true	
 			}
-			fmt.Println("failed")
+			//fmt.Println("failed")
 			//If it has failed
 			row = current[0]
 			col = current[1]
 			input[row][col] = 0
-			print(input)
 		}
 	}
 	
@@ -74,7 +98,6 @@ func find_next_empty(array [9][9]int) bool {
 func check_location_safety(array [9][9]int, num int) bool{
 	for i := 0; i<9; i++{
 		if array[row][i] == num || array[i][col] == num{
-			fmt.Println("row fail")
 			return false
 		}
 	}
@@ -83,7 +106,6 @@ func check_location_safety(array [9][9]int, num int) bool{
 	for i := 0; i < 3; i++{
 		for j := 0; j < 3; j++{
 			if array[i+box_start_row][box_start_col+j] == num {
-				fmt.Println("box fail")
 				return false
 			}
 		}
@@ -92,37 +114,7 @@ func check_location_safety(array [9][9]int, num int) bool{
 }
 
 
-func string_to_array(input string)[9][9]int{
-	if len(input) != 81{
-		panic("String wrong length")
-	}
-	var slice [][]int
-	var array [9][9]int
-	var row []int 
-	var value int
-	for _, letter := range input {
-        if letter == '.' {
-        	value = 0
-        }else{
-        	value = int(letter - '0')
-        }
-        //Add to row or reset to new row
-        if len(row) < 9{
-        	row = append(row,value)
-        }else{
-        	slice = append(slice, row)
-        	row = append([]int{},value)
-        }
-    }
-    //Add final row
-    slice = append(slice, row)
 
-    //Convert to an array
-    for i := 0; i<9; i++{
-    	copy(array[i][:],slice[i])
-	}
-    return array
-}
 
 //Prints out the array of numbers with formatting
 func print(array [9][9]int){
@@ -142,3 +134,30 @@ func print(array [9][9]int){
 	}
 	fmt.Printf("\n")
 }
+
+//Gets min max mean of a slice
+func statistics(array []time.Duration)(time.Duration,time.Duration,time.Duration){
+	//If the array is empty return null
+	if len(array) == 0{
+		return time.Duration(0),time.Duration(0),time.Duration(0)
+	}
+    var max time.Duration = array[0]
+    var min time.Duration = array[0]
+    var total time.Duration
+    for _, value := range array {
+    	total= total+value
+        if max < value {
+            max = value
+        }
+        if min > value {
+            min = value
+        }
+    }
+    return min, max, total/time.Duration(len(array))
+
+}
+
+
+
+
+
