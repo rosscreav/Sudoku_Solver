@@ -5,6 +5,7 @@ import (
 	io "example.com/sudoku/fileio"
 	"time"
 	"os"
+	"github.com/cheggaaa/pb/v3"
 )
 
 var row int
@@ -17,7 +18,7 @@ func main() {
 	}	
 	for _,filename := range argsWithoutProg{
 	    var testCases = io.Read_file(filename)
-
+	    bar := pb.StartNew(len(testCases))
 	    var solvedtimes []time.Duration
 	    var unsolvedtimes []time.Duration
 	    Totalstart := time.Now()
@@ -26,10 +27,14 @@ func main() {
 	    	start := time.Now()
 	    	if solve(testcase){
 	    		solvedtimes = append(solvedtimes,time.Since(start))
+
 	    	} else{
 	    		unsolvedtimes = append(unsolvedtimes,time.Since(start))
 	   		}
+	   		bar.Increment()
+	   		
 	    }
+	    bar.Finish()
 	    elapsed := time.Since(Totalstart)
 	    fmt.Printf("Testing %s",filename)
 		fmt.Printf("\nTested %d cases in %s\n",len(solvedtimes),elapsed)
